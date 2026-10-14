@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Senha Glitter</title>
+    <style>
+        :root {
+            --rosa-escuro: #ff4a8d;
+            --rosa-medio: #ff75a0;
+            --rosa-claro: #ffb3c6;
+            --rosa-fundo: #ffe5ec;
+            --cinza-texto: #4a4a4a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--rosa-fundo);
+            /* Efeito de Glitter usando gradientes cruzados e animação */
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1px, transparent 1px),
+                radial-gradient(circle at 75% 40%, rgba(255,255,255,0.9) 2px, transparent 2px),
+                radial-gradient(circle at 50% 80%, rgba(255,255,255,0.8) 1px, transparent 1px),
+                radial-gradient(circle at 90% 10%, rgba(255,255,255,0.9) 2px, transparent 2px),
+                radial-gradient(circle at 10% 85%, rgba(255,255,255,0.7) 3px, transparent 3px);
+            background-size: 200px 200px;
+            animation: glitterAnim 4s linear infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--cinza-texto);
+        }
+
+        @keyframes glitterAnim {
+            0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+            50% { background-position: 10px 20px, -10px 10px, 5px -15px, -5px -5px, 15px 10px; opacity: 0.9; }
+            100% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(255, 74, 141, 0.2);
+            border: 2px solid var(--rosa-claro);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--rosa-escuro);
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid var(--rosa-claro);
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        input[type="password"]:focus {
+            border-color: var(--rosa-escuro);
+            box-shadow: 0 0 8px rgba(255, 74, 141, 0.4);
+        }
+
+        .forca-bar {
+            height: 8px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .forca-progresso {
+            height: 100%;
+            width: 0%;
+            transition: all 0.4s ease;
+        }
+
+        .status-texto {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* Cores dos estados da senha */
+        .status-fraca { color: #d9534f; }
+        .status-media { color: #f0ad4e; }
+        .status-forte { color: #5cb85c; }
+
+        /* Tabela de Sugestões */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: var(--rosa-medio);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--rosa-claro);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            font-weight: bold;
+            text-align: center;
+            width: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✨ Analisador de Senha ✨</h1>
+        
+        <div class="input-group">
+            <input type="password" id="senhaInput" placeholder="Digite sua senha aqui...">
+        </div>
+
+        <div class="forca-bar">
+            <div id="barraProgresso" class="forca-progresso"></div>
+        </div>
+        
+        <div id="statusTexto" class="status-texto">Digite uma senha...</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px; text-align: center;">Status</th>
+                    <th>O que fazer para melhorar</th>
+                </tr>
+            </thead>
+            <tbody id="listaSugestoes">
+                <!-- Preenchido dinamicamente pelo JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const senhaInput = document.getElementById('senhaInput');
+        const barraProgresso = document.getElementById('barraProgresso');
+        const statusTexto = document.getElementById('statusTexto');
+        const listaSugestoes = document.getElementById('listaSugestoes');
+
+        senhaInput.addEventListener('input', verificarSenha);
+
+        function verificarSenha() {
+            const senha = senhaInput.value;
+            
+            // Requisitos de validação
+            const criterios = [
+                { id: 'comprimento', text: 'Ter pelo menos 8 caracteres', valid: senha.length >= 8 },
+                { id: 'maiuscula', text: 'Adicionar letras maiúsculas (A-Z)', valid: /[A-Z]/.test(senha) },
+                { id: 'minuscula', text: 'Adicionar letras minúsculas (a-z)', valid: /[a-z]/.test(senha) },
+                { id: 'numero', text: 'Adicionar números (0-9)', valid: /[0-9]/.test(senha) },
+                { id: 'especial', text: 'Adicionar caracteres especiais (!@#\$%^&*)', valid: /[^A-Za-z0-9]/.test(senha) }
+            ];
+
+            // Se o campo estiver vazio
+            if (senha.length === 0) {
+                barraProgresso.style.width = '0%';
+                statusTexto.textContent = 'Digite uma senha...';
+                statusTexto.className = 'status-texto';
+                listaSugestoes.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#999;">Insira caracteres para ver as dicas</td></tr>';
+                return;
+            }
+
+            // Conta quantos critérios foram atendidos
+            const acertos = criterios.filter(c => c.valid).length;
+            
+            // Define o nível de força baseado nas regras de negócio e acertos
+            let força = 'Fraca';
+            let corBarra = '#d9534f'; // Vermelho
+            let porcentagem = '33%';
+            let classeStatus = 'status-fraca';
+
+            if (acertos >= 5 && senha.length >= 10) {
+                força = 'Forte ✨';
+                corBarra = '#5cb85c'; // Verde
+                porcentagem = '100%';
+                classeStatus = 'status-forte';
+            } else if (acertos >= 3) {
+                força = 'Média';
+                corBarra = '#f0ad4e'; // Laranja
+                porcentagem = '66%';
+                classeStatus = 'status-media';
+            }
+
+            // Atualiza a interface visual básica
+            barraProgresso.style.width = porcentagem;
+            barraProgresso.style.backgroundColor = corBarra;
+            statusTexto.textContent = `Sua senha é: ${força}`;
+            statusTexto.className = `status-texto ${classeStatus}`;
+
+            // Renderiza a tabela de sugestões com base nos critérios faltantes
+            let tabelaHTML = '';
+            criterios.forEach(c => {
+                const icone = c.valid ? '💖' : '❌';
+                const estiloTexto = c.valid ? 'text-decoration: line-through; color: #aaa;' : 'font-weight: 500;';
+                
+                tabelaHTML += `
+                    <tr>
+                        <td class="check-icon">${icone}</td>
+                        <td style="${estiloTexto}">${c.text}</td>
+                    </tr>
+                `;
+            });
+            
+            listaSugestoes.innerHTML = tabelaHTML;
+        }
+
+        // Inicializa o estado vazio ao carregar a página
+        verificarSenha();
+    </script>
+</body>
+</html>
